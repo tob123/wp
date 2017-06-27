@@ -1,6 +1,7 @@
 ---
 # tasks file for tob.mdb
 # think of something better for selinux
+# do we need a root password for mysql ?
 - name: setup dedicated logical volume for db
   lvol:
     vg: "{{ vg_db_name }}"
@@ -29,16 +30,16 @@
   with_items:
    - mariadb-server
    - MySQL-python
-- name: ensure maroiadb runs
+- name: ensure mariadb runs
   service: name=mariadb enabled=yes state=started
-- name: generate mysql password
-  command: openssl rand -hex 7 creates=/root/.my.cnf
-  register: mysql_new_root_pass
-- name: create my.cnf
-  template: src=my.cnf dest=/root/.my.cnf
-  when: mysql_new_root_pass.changed
-- name: create mysql user in mysql
-  mysql_user: name=root host=localhost password={{mysql_new_root_pass.stdout}} login_password=""
-  when: mysql_new_root_pass.changed
+#- name: generate mysql password
+#  command: openssl rand -hex 7 creates=/root/.my.cnf
+#  register: mysql_new_root_pass
+#- name: create my.cnf
+#  template: src=my.cnf dest=/root/.my.cnf
+#  when: mysql_new_root_pass.changed
+#- name: create mysql user in mysql
+#  mysql_user: name=root host=localhost password={{mysql_new_root_pass.stdout}} login_password=""
+#  when: mysql_new_root_pass.changed
 
 
