@@ -1,0 +1,11 @@
+---
+- hosts: ansclient
+  become: true
+  become_user: root
+  tasks:
+          - name: do a connection check
+            ping:
+          - name: install packages required for epel
+            yum: name={{item}} state=present
+            with_items:
+              - http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-9.noarch.rpm

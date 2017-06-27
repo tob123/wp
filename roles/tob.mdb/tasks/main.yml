@@ -1,0 +1,44 @@
+---
+# tasks file for tob.mdb
+# think of something better for selinux
+- name: setup dedicated logical volume for db
+  lvol:
+    vg: "{{ vg_db_name }}"
+    lv: "{{ lv_db_name }}"
+    size: "{{ lv_db_size }}"
+#  when: dedicatedfs.true
+- name: create fs
+  filesystem: 
+    dev: /dev/{{vg_db_name}}/{{lv_db_name}}
+    fstype: xfs
+- name: create directory for mountpoint db
+  file: dest=/var/lib/mysql state=directory
+  register: create_mysql_dir
+- name: fix selinux
+  command: restorecon /var/lib/mysql
+  when: create_mysql_dir.changed
+- name: setup separate mountpoint
+  mount:
+    name: /var/lib/mysql
+    src: /dev/{{vg_db_name}}/{{lv_db_name}}
+    opts: nodev
+    fstype: xfs
+    state: mounted
+- name: install mariadb and python bindings for ansible mariadb management
+  yum: name={{item}} state=present
+  with_items:
+   - mariadb-server
+   - MySQL-python
+- name: ensure maroiadb runs
+  service: name=mariadb enabled=yes state=started
+- name: generate mysql password
+  command: openssl rand -hex 7 creates=/root/.my.cnf
+  register: mysql_new_root_pass
+- name: create my.cnf
+  template: src=my.cnf dest=/root/.my.cnf
+  when: mysql_new_root_pass.changed
+- name: create mysql user in mysql
+  mysql_user: name=root host=localhost password={{mysql_new_root_pass.stdout}} login_password=""
+  when: mysql_new_root_pass.changed
+
+

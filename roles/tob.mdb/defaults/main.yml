@@ -1,0 +1,6 @@
+---
+# defaults file for tob.mdb
+vg_db_name: vgappl
+lv_db_name: lvmysql
+# logical volume size in megabytes:
+lv_db_size: 1024

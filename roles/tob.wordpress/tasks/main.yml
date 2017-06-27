@@ -1,0 +1,51 @@
+---
+# tasks file for tob.wordpress
+# todo: think of way to use wordpress mysql password if already generated previously
+- name: create wordpress dir
+  file: dest=/var/www/html/{{wp_domain}} state=directory
+- name: install wordpress
+  unarchive: 
+    src: latest.tar.gz
+    extra_opts: ["--strip-components=1"]
+    dest: /var/www/html/{{wp_domain}}
+    creates: /var/www/html/{{wp_domain}}/wp-settings.php
+- name: create wp db
+  mysql_db: name="{{wp_db_name}}" state=present
+  register: db_created
+- name: generate wordpress password
+  command: openssl rand -hex 7
+  when: db_created.changed
+  register: wordpress_pass
+- name: create wp mysql user
+  mysql_user: name="{{wp_db_user}}" host=localhost password={{wordpress_pass.stdout}} priv={{wp_db_name}}.*:ALL
+  when: wordpress_pass.changed
+- name: create wp config file
+  template: src=wp-config.php dest=/var/www/html/{{wp_domain}}/wp-config.php
+  when: wordpress_pass.changed
+#- name: arrange wpcli tool
+#  stat: path=/usr/local/bin/wp
+#  register: wp_existing
+- name: arrange wpcli tool
+  copy: src=wp-cli.phar dest=/usr/local/bin/wp mode=755 owner=root group=root
+- name: look for existing wp users
+#  command: mysql -u {{wp_db_user}} -p{{wordpress_pass.stdout}} {{wp_db_name}} -e "SELECT ID FROM wp_test2234.wp_users LIMIT 1"
+  command: mysql -e "show tables from {{wp_db_name}}"
+  register: wpuser_result
+  changed_when: false
+- name: generate password for wpadmin
+  command: openssl rand -hex 7
+  register: wpadmin_pass
+  when: wpuser_result.stdout == ""
+- name: print wordpress admin and pass to screen
+  debug: 
+    msg: "the wordpress admin username is {{ wp_admin_user }} and the password is  {{ wpadmin_pass.stdout }}"
+  when: wpadmin_pass.changed
+- name: install wordpress site 
+  shell: >
+    /usr/local/bin/wp --path=/var/www/html/{{wp_domain}}/ core install 
+    --url={{wp_domain}} 
+    --title={{wp_title}} 
+    --admin_email={{wp_admin_email}}
+    --admin_password={{wpadmin_pass.stdout}}
+    --admin_user={{wp_admin_user}}
+  when: wpadmin_pass.changed

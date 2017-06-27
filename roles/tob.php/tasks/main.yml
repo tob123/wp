@@ -1,0 +1,7 @@
+---
+# tasks file for tob.php
+- name: install core php modules
+  package: name={{item}} state=installed
+  with_items:
+    - php
+    - php-mysql

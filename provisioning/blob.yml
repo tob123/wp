@@ -1,0 +1,11 @@
+---
+- hosts: ansclient
+  become: true
+  roles:
+#    - tob.php
+    - tob.httpd
+    - tob.mdb
+    - tob.wordpress
+  tasks:
+    - name: do connection test
+      ping:

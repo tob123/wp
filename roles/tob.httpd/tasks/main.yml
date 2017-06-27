@@ -1,0 +1,12 @@
+---
+# tasks file for tob.httpd
+- name: install packages required for wordpress
+  yum: name={{item}} state=present
+  with_items:
+    - httpd
+- name: enable and run httpd
+  service: name=httpd state=running
+- name: deliver apache config
+  template: src=wp.conf dest=/etc/httpd/conf.d/wp.conf
+  notify: restart httpd
+
