@@ -5,7 +5,7 @@
   with_items:
     - httpd
 - name: enable and run httpd
-  service: name=httpd state=running
+  service: name=httpd state=started
 - name: deliver apache config
   template: src=wp.conf dest=/etc/httpd/conf.d/wp.conf
   notify: restart httpd
